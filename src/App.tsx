@@ -5,24 +5,11 @@ import { UserWarning } from './UserWarning';
 import { USER_ID } from './api/todos';
 import { Todo } from './types/Todo';
 import { getTodos } from './api/todos';
-import cn from 'classnames';
 import { TodoList } from './components/TodoList';
-import { Filter } from './components/Filter';
 import { FilterOptions } from './types/FilterOptions';
-
-const handleFilter = (todosToUse: Todo[], activeFilter: FilterOptions) => {
-  let resultArray = [...todosToUse];
-
-  if (activeFilter === FilterOptions.ACTIVE) {
-    resultArray = resultArray.filter(todoItem => !todoItem.completed);
-  }
-
-  if (activeFilter === FilterOptions.COMPLETED) {
-    resultArray = resultArray.filter(todoItem => todoItem.completed);
-  }
-
-  return resultArray;
-};
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import { Error } from './components/Error';
 
 export const App: React.FC = () => {
   const [todosToUse, setTodosToUse] = useState<Todo[]>([]);
@@ -42,7 +29,17 @@ export const App: React.FC = () => {
       });
   }, []);
 
-  const visibleTodos = handleFilter(todosToUse, activeFilter);
+  const visibleTodos = todosToUse.filter(todo => {
+    if (activeFilter === FilterOptions.ACTIVE) {
+      return !todo.completed;
+    }
+
+    if (activeFilter === FilterOptions.COMPLETED) {
+      return todo.completed;
+    }
+
+    return true;
+  });
 
   const handleFilterChange = (newFilter: FilterOptions) => {
     setActiveFilter(newFilter);
@@ -57,24 +54,7 @@ export const App: React.FC = () => {
       <h1 className="todoapp__title">todos</h1>
 
       <div className="todoapp__content">
-        <header className="todoapp__header">
-          {/* this button should have `active` class only if all todos are completed */}
-          <button
-            type="button"
-            className="todoapp__toggle-all active"
-            data-cy="ToggleAllButton"
-          />
-
-          {/* Add a todo on form submit */}
-          <form>
-            <input
-              data-cy="NewTodoField"
-              type="text"
-              className="todoapp__new-todo"
-              placeholder="What needs to be done?"
-            />
-          </form>
-        </header>
+        <Header />
 
         {todosToUse.length > 0 && (
           <>
@@ -84,41 +64,16 @@ export const App: React.FC = () => {
               )}
             </section>
 
-            <footer className="todoapp__footer" data-cy="Footer">
-              <span className="todo-count" data-cy="TodosCounter">
-                {todosToUse.filter(todo => !todo.completed).length} items left
-              </span>
-
-              <Filter
-                activeFilter={activeFilter}
-                handleFilterChange={(string: FilterOptions) =>
-                  handleFilterChange(string)
-                }
-              />
-
-              <button
-                type="button"
-                className="todoapp__clear-completed"
-                data-cy="ClearCompletedButton"
-                disabled={todosToUse.every(todo => !todo.completed)}
-              >
-                Clear completed
-              </button>
-            </footer>
+            <Footer
+              todosToUse={todosToUse}
+              activeFilter={activeFilter}
+              handleFilterChange={handleFilterChange}
+            />
           </>
         )}
       </div>
 
-      <div
-        data-cy="ErrorNotification"
-        className={cn(
-          'notification is-danger is-light has-text-weight-normal',
-          { hidden: !errorMessage },
-        )}
-      >
-        <button data-cy="HideErrorButton" type="button" className="delete" />
-        {errorMessage}
-      </div>
+      <Error errorMessage={errorMessage} />
     </div>
   );
 };
